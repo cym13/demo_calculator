@@ -7,8 +7,8 @@
 #define MAX_NAME_LEN 64
 
 struct Variable_t {
-    char   name[MAX_NAME_LEN];
     Number value;
+    char   name[MAX_NAME_LEN];
 };
 
 typedef struct Variable_t* Variable;
@@ -27,7 +27,7 @@ char*    variable_repr(Variable self);
 Store    store_build(size_t length);
 bool     store_expand(Store self, size_t length);
 void     store_free(Store store);
-Variable store_register(Store self, const Variable variable);
+Variable store_register(Store self, const char* name, Number value);
 Variable store_find(Store self, const char* name);
 bool     store_forget(Store self, const char* name);
 void     store_print(Store self);

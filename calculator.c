@@ -14,7 +14,6 @@ Example:\n\
     > 2+2\n\
     4\n\
     > let i = (-3)*7.2\n\
-    $i(-21.599998)\n\
     > $i + 2\n\
     -19.599998\n\
     > del i\n\
@@ -169,16 +168,19 @@ void p_assign()
 
     Number value = p_expression();
 
-    Variable var = variable_build(STORE, name, value);
+    Variable var = store_find(STORE, name);
+    if (var != NULL) {
+        var->value = value;
+        free(name);
+        return;
+    }
+
+    var = store_register(STORE, name, value);
     if (var == NULL) {
         printf("Fatal Error: Couldn't assign variable");
         free(name);
         exit(1);
     }
-
-    char* repr = variable_repr(var);
-    printf("%s\n", repr);
-    free(repr);
 
     free(name);
 }
@@ -326,12 +328,12 @@ Number p_variable()
     char* name = getVarName();
 
     Variable var = store_find(STORE, name);
+    free(name);
+
     if (var == NULL) {
-        free(name);
         expect("an existing variable's name");
     }
 
-    free(name);
     return var->value;
 }
 
