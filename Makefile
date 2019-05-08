@@ -1,7 +1,7 @@
 
 PROG := main
 CC := gcc
-CFLAGS := -m32
+CFLAGS := -m32 -g
 
 
 calculator: calculator.c numbers.c variables.c
