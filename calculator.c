@@ -4,6 +4,27 @@
 #include <stdbool.h>
 
 #include "numbers.h"
+#include "variables.h"
+
+static char HELP_MSG[] = "Simple command-line calculator\n\
+\n\
+Usage: calculator [-h]\n\
+\n\
+Example:\n\
+    > 2+2\n\
+    4\n\
+    > let i = (-3)*7.2\n\
+    $i(-21.599998)\n\
+    > $i + 2\n\
+    -19.599998\n\
+    > del i\n\
+    >\n\
+    (empty line exits)\n\
+";
+
+
+/* Global variable store, we only have one variable scope */
+static Store STORE;
 
 /******************************************************************************
  * Here begins the evaluator internals
@@ -22,11 +43,19 @@ void match(char);
 
 void match(char c)
 {
+    while (LOOK == ' ') {
+        INPUT++;
+        LOOK = INPUT[0];
+    }
+
     if (LOOK != c)
         expectChar(c);
 
-    INPUT++;
-    LOOK = INPUT[0];
+    do {
+        INPUT++;
+        LOOK = INPUT[0];
+    } while (LOOK == ' ');
+
 }
 
 
@@ -37,41 +66,142 @@ bool isDigit(char c)
 
 void matchDigit()
 {
+    while (LOOK == ' ') {
+        INPUT++;
+        LOOK = INPUT[0];
+    }
+
     if (isDigit(LOOK)) {
         INPUT++;
         LOOK = *INPUT;
     }
     else expect("a digit");
+
+    while (LOOK == ' ') {
+        INPUT++;
+        LOOK = INPUT[0];
+    }
+}
+
+bool isVarNameChar(char c)
+{
+    if (('a' <= c) && (c <= 'z'))
+        return true;
+
+    if (('A' <= c) && (c <= 'Z'))
+        return true;
+
+    if (('0' <= c) && (c <= '9'))
+        return true;
+
+    if ((c == '_') || (c == '-') || (c == '.'))
+        return true;
+
+    return false;
+}
+
+bool isAddOp(char c)
+{
+    return ((c == '+') || (c == '-'));
+}
+
+bool isProdOp(char c)
+{
+    return ((c == '*') || (c == '/'));
+}
+
+char* getVarName()
+{
+    char* nend = INPUT;
+    while (isVarNameChar(*nend))
+        nend++;
+
+    char* result = strndup(INPUT, nend-INPUT);
+
+    INPUT = nend;
+    LOOK  = INPUT[0];
+
+    while (LOOK == ' ') {
+        INPUT++;
+        LOOK = INPUT[0];
+    }
+
+    return result;
 }
 
 /******************************************************************************
  * Here begins the parsing rules
  ******************************************************************************/
 
-Number expression();
-Number add();
-Number substract();
-Number multiply();
-Number divide();
-Number factor();
-Number term();
-Number number();
-bool isAddOp(char);
-bool isProdOp(char);
+void p_line();
+void p_assign();
+void p_delete();
+Number p_expression();
+Number p_add();
+Number p_substract();
+Number p_multiply();
+Number p_divide();
+Number p_factor();
+Number p_term();
+Number p_number();
+Number p_variable();
 
-
-/* This is our most general expression.
- * It represents either a single element or sum of elements.
- */
-Number expression()
+void p_line()
 {
-    Number result = term();
+    if (!strncmp(INPUT, "let ", 4)) {
+        INPUT += 4;
+        p_assign();
+    }
+    else if (!strncmp(INPUT, "del ", 4)) {
+        INPUT += 4;
+        p_delete();
+    }
+    else {
+        printf("%s\n", number_repr(p_expression()));
+    }
+}
+
+void p_assign()
+{
+    char* name = getVarName();
+
+    match('=');
+
+    Number value = p_expression();
+
+    Variable var = variable_build(STORE, name, value);
+    if (var == NULL) {
+        printf("Fatal Error: Couldn't assign variable");
+        free(name);
+        exit(1);
+    }
+
+    char* repr = variable_repr(var);
+    printf("%s\n", repr);
+    free(repr);
+
+    free(name);
+}
+
+void p_delete()
+{
+    char* name = getVarName();
+
+    if (!store_forget(STORE, name))
+        printf("Unknown variable\n");
+
+    free(name);
+}
+
+Number p_expression()
+{
+    Number result = p_term();
 
     while (isAddOp(LOOK)) {
         switch (LOOK) {
-            case '+': result = number_add(result, add());
+            case '+': result = number_add(result, p_add());
                       break;
-            case '-': result = number_sub(result, substract());
+            case '-': result = number_sub(result, p_substract());
                       break;
         }
     }
@@ -79,28 +209,28 @@ Number expression()
     return result;
 }
 
-Number add()
+Number p_add()
 {
     match('+');
-    return term();
+    return p_term();
 }
 
-Number substract()
+Number p_substract()
 {
     match('-');
-    return term();
+    return p_term();
 }
 
-Number multiply()
+Number p_multiply()
 {
     match('*');
-    return factor();
+    return p_factor();
 }
 
-Number divide()
+Number p_divide()
 {
     match('/');
-    Number result = factor();
+    Number result = p_factor();
 
     if (number_eq(result, number_build_int(0)))
         expect("non zero dividend");
@@ -108,31 +238,35 @@ Number divide()
     return result;
 }
 
-Number factor()
+Number p_factor()
 {
     Number result = number_build_int(0);
 
     if (LOOK == '(') {
         match('(');
-        result = number_add(result, expression());
+        result = number_add(result, p_expression());
         match(')');
     }
+    else if (LOOK == '$') {
+        match('$');
+        result = p_variable();
+    }
     else {
-        result = number();
+        result = p_number();
     }
 
     return result;
 }
 
-Number term()
+Number p_term()
 {
-    Number result = factor();
+    Number result = p_factor();
 
     while (isProdOp(LOOK)) {
         switch (LOOK) {
-            case '*': result = number_mul(result, multiply());
+            case '*': result = number_mul(result, p_multiply());
                       break;
-            case '/': result = number_div(result, divide());
+            case '/': result = number_div(result, p_divide());
                       break;
         }
     }
@@ -140,7 +274,7 @@ Number term()
     return result;
 }
 
-Number number()
+Number p_number()
 {
     Number result = number_build_int(0);
     Number sign   = number_build_int(1);
@@ -187,12 +321,18 @@ Number number()
     return result;
 }
 
-bool isAddOp(char c) {
-    return ((c == '+') || (c == '-'));
-}
+Number p_variable()
+{
+    char* name = getVarName();
 
-bool isProdOp(char c) {
-    return ((c == '*') || (c == '/'));
+    Variable var = store_find(STORE, name);
+    if (var == NULL) {
+        free(name);
+        expect("an existing variable's name");
+    }
+
+    free(name);
+    return var->value;
 }
 
 /******************************************************************************
@@ -201,14 +341,33 @@ bool isProdOp(char c) {
 
 int main(int argc, char *argv[])
 {
-    if (argc < 2) {
-        expect("a command-line argument to evaluate");
-        return 1;
+    if (argc > 1 && (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help"))) {
+        printf("%s", HELP_MSG);
+        return 0;
     }
 
-    INPUT = argv[1];
-    LOOK  = INPUT[0];
-    printf("%s\n", number_repr(expression()));
+    STORE = store_build(4);
 
+    char*  line     = NULL;
+    size_t line_len = 0;
+
+    do {
+        free(line);
+        printf("> ");
+        getline(&line, &line_len, stdin);
+
+        if (line == NULL) {
+            fprintf(stderr, "Allocation error\n");
+            return 1;
+        }
+
+        INPUT = line;
+        LOOK  = INPUT[0];
+
+        p_line();
+        line_len = 0;
+    } while (line[0] != '\n');
+
+    store_free(STORE);
     return 0;
 }

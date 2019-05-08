@@ -13,7 +13,23 @@ struct Variable_t {
 
 typedef struct Variable_t* Variable;
 
-Variable variable_build(const char* name, const Number value);
-void variable_free(Variable);
+struct Store_t {
+    size_t num_var;
+    size_t length;
+    Variable variables;
+};
+
+typedef struct Store_t* Store;
+
+Variable variable_build(Store store, const char* name, const Number value);
+char*    variable_repr(Variable self);
+
+Store    store_build(size_t length);
+bool     store_expand(Store self, size_t length);
+void     store_free(Store store);
+Variable store_register(Store self, const Variable variable);
+Variable store_find(Store self, const char* name);
+bool     store_forget(Store self, const char* name);
+void     store_print(Store self);
 
 #endif
