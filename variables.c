@@ -110,7 +110,6 @@ void store_print(Store self)
         if (self->variables[i].name[0] == '\0')
             continue;
         char* repr = variable_repr(&(self->variables[i]));
-        printf("%s\n", repr);
         free(repr);
     }
 }

@@ -84,6 +84,10 @@ void matchDigit()
 
 bool isVarNameChar(char c)
 {
+    if (c == ' ' || c == '=' || c == '\n')
+        return false;
+    return true;
+
     if (('a' <= c) && (c <= 'z'))
         return true;
 
@@ -190,7 +194,7 @@ void p_delete()
     char* name = getVarName();
 
     if (!store_forget(STORE, name))
-        printf("Unknown variable\n");
+        puts("Unknown variable");
 
     free(name);
 }
@@ -331,7 +335,8 @@ Number p_variable()
     free(name);
 
     if (var == NULL) {
-        expect("an existing variable's name");
+        puts("Unknown variable");
+        return number_build_int(0);
     }
 
     return var->value;
