@@ -32,12 +32,12 @@ static Store STORE;
 static char  LOOK;  // The character being analyzed
 static char* INPUT; // The string being analyzed
 
-bool isDigit(char);
-void matchDigit();
+bool is_digit(char);
+void match_digit();
 void match(char);
 
-#define expect(msg)     do{ printf("Expecting %s.\n", msg); exit(1); }while(0)
-#define expectChar(chr) do{ printf("Expecting %c.\n", chr); exit(1); }while(0)
+#define expect(msg)      do{ printf("Expecting %s.\n", msg); exit(1); }while(0)
+#define expect_char(chr) do{ printf("Expecting %c.\n", chr); exit(1); }while(0)
 
 
 void match(char c)
@@ -48,7 +48,7 @@ void match(char c)
     }
 
     if (LOOK != c)
-        expectChar(c);
+        expect_char(c);
 
     do {
         INPUT++;
@@ -58,19 +58,19 @@ void match(char c)
 }
 
 
-bool isDigit(char c)
+bool is_digit(char c)
 {
     return (c >= '0') && (c <= '9');
 }
 
-void matchDigit()
+void match_digit()
 {
     while (LOOK == ' ') {
         INPUT++;
         LOOK = INPUT[0];
     }
 
-    if (isDigit(LOOK)) {
+    if (is_digit(LOOK)) {
         INPUT++;
         LOOK = *INPUT;
     }
@@ -82,41 +82,27 @@ void matchDigit()
     }
 }
 
-bool isVarNameChar(char c)
+bool is_var_name_char(char c)
 {
     if (c == ' ' || c == '=' || c == '\n')
         return false;
     return true;
-
-    if (('a' <= c) && (c <= 'z'))
-        return true;
-
-    if (('A' <= c) && (c <= 'Z'))
-        return true;
-
-    if (('0' <= c) && (c <= '9'))
-        return true;
-
-    if ((c == '_') || (c == '-') || (c == '.'))
-        return true;
-
-    return false;
 }
 
-bool isAddOp(char c)
+bool is_add_op(char c)
 {
     return ((c == '+') || (c == '-'));
 }
 
-bool isProdOp(char c)
+bool is_prod_op(char c)
 {
     return ((c == '*') || (c == '/'));
 }
 
-char* getVarName()
+char* get_var_name()
 {
     char* nend = INPUT;
-    while (isVarNameChar(*nend))
+    while (is_var_name_char(*nend))
         nend++;
 
     char* result = strndup(INPUT, nend-INPUT);
@@ -166,7 +152,7 @@ void p_line()
 
 void p_assign()
 {
-    char* name = getVarName();
+    char* name = get_var_name();
 
     match('=');
 
@@ -180,7 +166,7 @@ void p_assign()
     }
 
     var = store_register(STORE, name, value);
-    if (var == NULL) {
+    if (!var) {
         printf("Fatal Error: Couldn't assign variable");
         free(name);
         exit(1);
@@ -191,7 +177,7 @@ void p_assign()
 
 void p_delete()
 {
-    char* name = getVarName();
+    char* name = get_var_name();
 
     if (!store_forget(STORE, name))
         puts("Unknown variable");
@@ -203,7 +189,7 @@ Number p_expression()
 {
     Number result = p_term();
 
-    while (isAddOp(LOOK)) {
+    while (is_add_op(LOOK)) {
         switch (LOOK) {
             case '+': result = number_add(result, p_add());
                       break;
@@ -268,7 +254,7 @@ Number p_term()
 {
     Number result = p_factor();
 
-    while (isProdOp(LOOK)) {
+    while (is_prod_op(LOOK)) {
         switch (LOOK) {
             case '*': result = number_mul(result, p_multiply());
                       break;
@@ -290,10 +276,10 @@ Number p_number()
         sign = number_build_int(-1);
     }
 
-    while (isDigit(LOOK)) {
+    while (is_digit(LOOK)) {
         result = number_add(number_mul(result, number_build_int(10)),
                             number_build_int(LOOK - '0'));
-        matchDigit();
+        match_digit();
     }
 
     if (LOOK != '.')
@@ -311,11 +297,11 @@ Number p_number()
     match('.');
 
     size_t decimal_places = 0;
-    while (isDigit(LOOK)) {
+    while (is_digit(LOOK)) {
         decimal_places++;
         result = number_add(number_mul(result, number_build_int(10)),
                             number_build_int(LOOK - '0'));
-        matchDigit();
+        match_digit();
     }
 
     result = number_build_float(result.int_val);
@@ -329,12 +315,12 @@ Number p_number()
 
 Number p_variable()
 {
-    char* name = getVarName();
+    char* name = get_var_name();
 
     Variable var = store_find(STORE, name);
     free(name);
 
-    if (var == NULL) {
+    if (!var) {
         puts("Unknown variable");
         return number_build_int(0);
     }
@@ -363,7 +349,7 @@ int main(int argc, char *argv[])
         printf("> ");
         getline(&line, &line_len, stdin);
 
-        if (line == NULL) {
+        if (!line) {
             fprintf(stderr, "Allocation error\n");
             return 1;
         }

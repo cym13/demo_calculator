@@ -31,7 +31,7 @@ bool store_expand(Store self, size_t length)
         return false;
 
     Variable new_buffer = (Variable) calloc(length, sizeof(struct Variable_t));
-    if (new_buffer == NULL)
+    if (!new_buffer)
         return false;
 
     for (size_t i=0 ; i<self->num_var ; i++)
@@ -95,7 +95,7 @@ bool store_forget(Store self, const char* name)
 {
     Variable result = store_find(self, name);
 
-    if (result == NULL)
+    if (!result)
         return false;
 
     result->name[0] = '\0';
