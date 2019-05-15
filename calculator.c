@@ -341,6 +341,11 @@ int main(int argc, char *argv[])
 
     STORE = store_build(4);
 
+    if (!STORE) {
+        puts("Cannot allocate store");
+        return 1;
+    }
+
     char*  line     = NULL;
     size_t line_len = 0;
 

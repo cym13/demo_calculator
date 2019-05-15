@@ -18,6 +18,9 @@ Store store_build(size_t length)
 {
     Store result = (Store) malloc(sizeof(struct Store_t));
 
+    if (!result)
+        return NULL;
+
     result->num_var = 0,
     result->length  = length,
     result->variables = (Variable) calloc(length, sizeof(struct Variable_t));
