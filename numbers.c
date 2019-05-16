@@ -8,7 +8,7 @@ Number __num_int_mul(Number*, Number*);
 Number __num_int_div(Number*, Number*);
 
 bool __num_int_eq(Number*, Number*);
-const char* __num_int_repr(Number*);
+char* __num_int_repr(Number*);
 
 Number number_build_int(int val)
 {
@@ -117,13 +117,13 @@ bool __num_int_eq(Number* self, Number* other)
     return false;
 }
 
-const char* __num_int_repr(Number* self)
+char* __num_int_repr(Number* self)
 {
     size_t repr_length = snprintf(NULL, 0, "%d", self->int_val) + 1;
     char* result = (char*)calloc(repr_length, sizeof(char));
     snprintf(result, repr_length, "%d", self->int_val);
 
-    return (const char*)result;
+    return result;
 }
 
 Number __num_float_add(Number*, Number*);
@@ -132,7 +132,7 @@ Number __num_float_mul(Number*, Number*);
 Number __num_float_div(Number*, Number*);
 
 bool __num_float_eq(Number* self, Number* other);
-const char* __num_float_repr(Number*);
+char* __num_float_repr(Number*);
 
 Number number_build_float(float val)
 {
@@ -217,13 +217,13 @@ Number __num_float_div(Number* self, Number* other)
     return result;
 }
 
-const char* __num_float_repr(Number* self)
+char* __num_float_repr(Number* self)
 {
     size_t repr_length = snprintf(NULL, 0, "%f", self->float_val) + 1;
     char* result = (char*)calloc(repr_length, sizeof(char));
     snprintf(result, repr_length, "%f", self->float_val);
 
-    return (const char*)result;
+    return result;
 }
 
 bool __num_float_eq(Number* self, Number* other)
@@ -267,7 +267,7 @@ Number number_div(Number a, Number b)
     return a.div(&a, &b);
 }
 
-const char* number_repr(Number a)
+char* number_repr(Number a)
 {
     return a.repr(&a);
 }

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include "history.h"
 #include "numbers.h"
 #include "variables.h"
 #include "parser.h"
@@ -17,20 +18,20 @@ static char* INPUT; // The string being analyzed
 /* Global variable store, we only have one variable scope */
 static Store STORE;
 
-bool p_parse(const char* line, void (*p_func)())
+Number p_parse(const char* line, Number (*p_func)())
 {
     char* input = strdup(line);
     INPUT = input;
 
     if (!INPUT)
-        return false;
+        return number_build_int(0);
 
-    LOOK  = INPUT[0];
+    LOOK = INPUT[0];
 
-    p_func();
+    Number result = p_func();
 
     free(input);
-    return true;
+    return result;
 }
 
 bool p_build()
@@ -136,22 +137,59 @@ char* get_var_name()
  * Here begins the parsing rules
  ******************************************************************************/
 
-void p_line()
+Number p_line()
 {
+    Number result = number_build_int(0);
+
     if (!strncmp(INPUT, "let ", 4)) {
         INPUT += 4;
-        p_assign();
+        result = p_assign();
     }
     else if (!strncmp(INPUT, "del ", 4)) {
         INPUT += 4;
-        p_delete();
+        result = p_delete();
+    }
+    else if (!strncmp(INPUT, "help", 4)) {
+        INPUT += 4;
+        result = p_help();
+    }
+    else if (!strncmp(INPUT, "save_to ", 4)) {
+        INPUT += 8;
+        result = p_save();
     }
     else {
-        printf("%s\n", number_repr(p_expression()));
+        result = p_expression();
+        char* repr = number_repr(result);
+        printf("%s\n", repr);
+        free(repr);
     }
+
+    return result;
 }
 
-void p_assign()
+Number p_help()
+{
+    puts("help: print this help");
+    puts("let: set variable value");
+    puts("del: delete a variable");
+    puts("save_to: save history to path");
+    return number_build_int(0);
+}
+
+Number p_save()
+{
+    if (strchr(INPUT, '/')) {
+        puts("ERROR: only local files are authorized");
+        return number_build_int(-1);
+    }
+
+    // Remove trailing \n
+    INPUT[strlen(INPUT)-1] = '\0';
+
+    return number_build_int(history_save_to(INPUT));
+}
+
+Number p_assign()
 {
     char* name = get_var_name();
 
@@ -163,7 +201,7 @@ void p_assign()
     if (var != NULL) {
         var->value = value;
         free(name);
-        return;
+        return value;
     }
 
     var = store_register(STORE, name, value);
@@ -174,9 +212,10 @@ void p_assign()
     }
 
     free(name);
+    return value;
 }
 
-void p_delete()
+Number p_delete()
 {
     char* name = get_var_name();
 
@@ -184,6 +223,7 @@ void p_delete()
         puts("Unknown variable");
 
     free(name);
+    return number_build_int(0);
 }
 
 Number p_expression()

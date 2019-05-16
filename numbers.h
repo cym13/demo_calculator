@@ -22,7 +22,7 @@ typedef struct Number_t {
     struct Number_t (*div)(struct Number_t*, struct Number_t*);
 
     bool (*eq)(struct Number_t*, struct Number_t*);
-    const char* (*repr)(struct Number_t*);
+    char* (*repr)(struct Number_t*);
 } Number;
 
 /*
@@ -47,7 +47,7 @@ bool number_eq(Number, Number);
 /*
  * Printable representation of the value, must be freed
  */
-const char* number_repr(Number);
+char* number_repr(Number);
 
 /*
  * Variable management
