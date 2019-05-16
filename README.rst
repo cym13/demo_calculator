@@ -7,7 +7,8 @@ What is this?
 
 This is a simple text-based calculator. It supports all four common
 operations, integers and floating point numbers as well as variable
-assignment to keep track of your results.
+assignment to keep track of your results. It also has an history so you can
+reference previous results and save your work in a file.
 
 This is (really) not meant for production use. However it shows how one may
 build a simple interpreter with basic features.
