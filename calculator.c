@@ -12,13 +12,20 @@ static char HELP_MSG[] = "Simple command-line calculator\n\
 Usage: calculator [-h]\n\
 \n\
 Example:\n\
-    > 2+2\n\
+    [1]> help\n\
+    help: print this help\n\
+    let: set variable value\n\
+    del: delete a variable\n\
+    save_to: save history to path\n\
+    [2]> 2+2\n\
     4\n\
-    > let i = (-3)*7.2\n\
-    > $i + 2\n\
+    [3]> let i = (-3)*7.2\n\
+    [4]> $i + 2\n\
     -19.599998\n\
-    > del i\n\
-    >\n\
+    [5]> #2 + $i\n\
+    -17.599998\n\
+    [6]> del i\n\
+    [7]>\n\
     (empty line exits)\n\
 ";
 
@@ -45,7 +52,7 @@ int main(int argc, char *argv[])
 
     do {
         free(line);
-        printf("[%ld]> ", history_num_entries());
+        printf("[%ld]> ", history_num_entries()+1);
         getline(&line, &line_len, stdin);
 
         if (!line) {

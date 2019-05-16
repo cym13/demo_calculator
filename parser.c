@@ -280,6 +280,10 @@ Number p_factor()
         result = number_add(result, p_expression());
         match(')');
     }
+    else if (LOOK == '#') {
+        match('#');
+        result = p_histref();
+    }
     else if (LOOK == '$') {
         match('$');
         result = p_variable();
@@ -369,3 +373,24 @@ Number p_variable()
     return var->value;
 }
 
+Number p_histref()
+{
+    Number id_n = p_number();
+
+    if (id_n.type != NT_INT) {
+        puts("ERROR: history reference must be an integer");
+        return number_build_int(0);
+    }
+
+    char* repr = number_repr(id_n);
+    int id = atoi(repr);
+    free(repr);
+
+    HistNode hist_entry = history_get(id);
+    if (!hist_entry) {
+        puts("ERROR: history reference not found");
+        return number_build_int(0);
+    }
+
+    return hist_entry->result;
+}

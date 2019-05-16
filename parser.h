@@ -25,6 +25,7 @@ Number p_number();
 Number p_variable();
 Number p_help();
 Number p_save();
+Number p_histref();
 
 
 #endif
