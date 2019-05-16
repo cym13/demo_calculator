@@ -73,7 +73,7 @@ int history_save_to(char* path)
 
     HistNode current = HISTORY.first;
 
-    long result;
+    long result = 0;
     size_t num_input = 0;
     while (current != NULL) {
         char* repr = number_repr(current->result);

@@ -139,7 +139,7 @@ char* get_var_name()
 
 Number p_line()
 {
-    Number result = number_build_int(0);
+    Number result;
 
     if (!strncmp(INPUT, "let ", 4)) {
         INPUT += 4;
